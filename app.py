@@ -5,9 +5,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 # Inicializar Firebase usando el secreto seguro de Render
 if not firebase_admin._apps:
@@ -17,49 +14,6 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-
-def enviar_correo_respaldo(destinatario, nombre_usuario, codigo, tipo_usuario, vencimiento):
-    remitente = os.getenv("MAIL_USER")
-    password = os.getenv("MAIL_PASSWORD")
-    
-    if not remitente or not password:
-        return "No configurado"
-    
-    try:
-        asunto = "✨ Tus Accesos y Código VIP - SC-Prisma"
-        cuerpo = f"""
-Hola {nombre_usuario},
-
-Nos alegra mucho acompañarte en el Ecosistema SC-Prisma. 
-
-Tu Código VIP de respaldo: {codigo}
-Vigencia: Hasta el {vencimiento}
-Perfil: {tipo_usuario}
-
-Enlaces de Acceso:
-• Biblioteca de Software: https://sc-prisma.com/biblioteca-software/biblioteca-software.html
-• Red Profesional: https://sc-prisma.com/solicitud-profesional.html
-
-TÉRMINOS Y CONDICIONES:
-Al hacer uso de las aplicaciones del Ecosistema Digital, aceptas los términos de uso y límites de las licencias temporales. Uso personal e intransferible.
-
-Atentamente,
-El Equipo de SC-Prisma
-"""
-        msg = MIMEMultipart()
-        msg['From'] = remitente
-        msg['To'] = destinatario
-        msg['Subject'] = asunto
-        msg.attach(MIMEText(cuerpo, 'plain'))
-
-        servidor = smtplib.SMTP('smtp.gmail.com', 587)
-        servidor.starttls()
-        servidor.login(remitente, password)
-        servidor.sendmail(remitente, destinatario, msg.as_string())
-        servidor.quit()
-        return "Enviado con éxito"
-    except Exception as e:
-        return f"Error al enviar: {str(e)}"
 
 def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estudiante, edad_estudiante, motivo_apoyo, app_preferida):
     usuarios_previos = db.collection('estudiantes').where('email', '==', email_adulto).get()
@@ -78,6 +32,8 @@ Para que no te quedes sin acceso, aquí tienes nuevamente tus datos activos:
 🔑 **Tu Código VIP es:** `{codigo_existente}`
 ⏳ **Vigencia:** Hasta el {vencimiento_existente}
 
+⚠️ **¡Importante!** Copia y guarda tu clave en un lugar seguro. Si la pierdes, no podrás disfrutar del acceso.
+
 📌 **Enlaces Directos:**
 • Ingresa al Ecosistema Digital en la plataforma principal con tu código.
 • Explora la Biblioteca de Software: 👉 [Biblioteca de Software SC-Prisma](https://sc-prisma.com/biblioteca-software/biblioteca-software.html)
@@ -89,11 +45,9 @@ Para que no te quedes sin acceso, aquí tienes nuevamente tus datos activos:
     if rol == "Profesional / Educador / Terapeuta":
         prefijo = nombre_adulto.split()[0][:3].upper()
         codigo_vip = f"PRO{prefijo}{random.randint(1000, 9999)}"
-        tipo_str = "Profesional / Terapeuta"
     else:
         prefijo = nombre_estudiante.split()[0][:3].upper()
         codigo_vip = f"{prefijo}{random.randint(1000, 9999)}VIP"
-        tipo_str = f"Familiar ({nombre_estudiante})"
         
     hoy = datetime.now()
     vencimiento = hoy + timedelta(days=3)
@@ -117,16 +71,15 @@ Para que no te quedes sin acceso, aquí tienes nuevamente tus datos activos:
     
     db.collection('estudiantes').add(nuevo_registro)
     
-    estado_correo = enviar_correo_respaldo(email_adulto, nombre_adulto, codigo_vip, tipo_str, fecha_venc_str)
-    
     return f"""
 🌟 **¡Tu Acceso para {nombre_estudiante if rol != "Profesional / Educador / Terapeuta" else nombre_adulto} está listo!** 🌟
 
-Hola **{nombre_adulto}**. Tu registro se ha completado con éxito.
+Hola **{nombre_adulto}**. Tu registro se ha completado con éxito de forma inmediata.
 
 🔑 **Tu Código VIP Personal es:** `{codigo_vip}`
 ⏳ **Vigencia:** 3 días (Hasta el {fecha_venc_str}).
-✉️ *Estado del correo de respaldo:* `{estado_correo}`
+
+⚠️ **¡Copia tu clave ahora mismo!** Si la pierdes, no podrás disfrutar del acceso a las herramientas.
 
 ---
 
@@ -141,7 +94,7 @@ Prueba tus apps de forma gratuita durante 3 días en nuestra **Biblioteca de Sof
 Visita nuestra página de suscripción: 
 👉 [Solicitud Profesional SC-Prisma](https://sc-prisma.com/solicitud-profesional.html)
 
-⚖️ *Al ingresar y hacer uso de las aplicaciones, aceptas los términos y condiciones de uso del Ecosistema.*
+⚖️ *Al hacer clic en activar y hacer uso de las aplicaciones, aceptas los términos y condiciones de uso del Ecosistema.*
     """
 
 demo = gr.Interface(
@@ -172,5 +125,4 @@ demo = gr.Interface(
     submit_btn="🚀 Activar Mi Prueba y Obtener Acceso"
 )
 
-# Lanzamiento para la nube en Render
 demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
