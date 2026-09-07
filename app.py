@@ -104,7 +104,7 @@ demo = gr.Interface(
             value="Tablero Aurora SAAC (Recomendado)"
         )
     ],
-    outputs=gr.Textbox(label="Respuesta y Tus Accesos SC-Prisma", lines=16),
+    outputs=gr.Markdown(label="Respuesta y Tus Accesos SC-Prisma"),
     title="✨ Formulario para Solicitud de Prueba Gratuita | SC-Prisma",
     description="Completa los datos para activar tus 3 días de acceso al Ecosistema Digital y a las Apps Educativas.",
     theme="soft"
