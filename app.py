@@ -18,17 +18,23 @@ db = firestore.client()
 def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estudiante, edad_estudiante, motivo_apoyo, app_preferida):
     if rol == "Profesional / Educador / Terapeuta":
         return f"""
-        👩‍⚕️ **Bienvenid@ a la Red Profesional SC-Prisma**
-        Hola {nombre_adulto}, recuerda que como profesional gestionas tu Oficina PRO y emites códigos para las familias.
+👩‍💼 **Bienvenid@ a la Red Profesional SC-Prisma**
+
+Hola **{nombre_adulto}**, recuerda que como profesional gestionas tu Oficina PRO y emites códigos para las familias.
+
+Tienes acceso al **Ecosistema del Estudiante** para evaluar las herramientas. Para conocer el entorno que conecta este ecosistema con una **Oficina Virtual**, suscríbete a un plan visitando nuestra página oficial: 
+👉 [Solicitud Profesional SC-Prisma](https://sc-prisma.com/solicitud-profesional.html)
         """
     else:
         usuarios_previos = db.collection('estudiantes').where('email', '==', email_adulto).get()
         
         if len(usuarios_previos) > 0:
             return f"""
-            ⏳ **Hola nuevamente, {nombre_adulto}.**
-            Notamos que el correo `{email_adulto}` ya disfrutó de su período de prueba gratuito de 3 días para {nombre_estudiante}. 
-            Para continuar disfrutando de las aplicaciones y mantener el Ecosistema Digital activo, te invitamos a elegir una de nuestras opciones en https://sc-prisma.com/ecosistema-digital.html#pricing
+⏳ **Hola nuevamente, {nombre_adulto}.**
+
+Notamos que el correo `{email_adulto}` ya disfrutó de su período de prueba gratuito de 3 días para {nombre_estudiante}. 
+Para continuar disfrutando de las aplicaciones y mantener el Ecosistema Digital activo, te invitamos a elegir una de nuestras opciones en:
+👉 [Planes y Opciones Ecosistema Digital](https://sc-prisma.com/ecosistema-digital.html#pricing)
             """
         
         prefijo = nombre_estudiante.split()[0][:3].upper()
@@ -56,25 +62,25 @@ def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estu
         db.collection('estudiantes').add(nuevo_ecosistema_libre)
         
         return f"""
-        🌟 **¡Tu Ecosistema para {nombre_estudiante} está listo!** 🌟
-        
-        Hola {nombre_adulto}. Nos alegra acompañarte. Tu correo `{email_adulto}` ha quedado registrado con éxito.
-        
-        🔑 **Tu Código VIP Personal es:** `{codigo_vip}`
-        ⏳ **Vigencia:** 3 días (Hasta el {vencimiento.strftime('%d/%m/%Y')}).
-        
-        ---
-        
-        📌 **¿Cómo ingresar al Ecosistema Digital completo?**
-        1. Dirígete a la página principal de nuestros ecosistemas.
-        2. Busca la sección o botón de **"Inicia sesión VIP"**.
-        3. Introduce tu código `{codigo_vip}` para ingresar directamente al espacio de {nombre_estudiante}.
-        
-        🚀 **¿Y las Aplicaciones Educativas?**
-        ¡Este mismo código te sirve por 3 días para probar nuestras apps de forma gratuita! Explora y elige tus herramientas favoritas en nuestra **Biblioteca de Software**: 
-        👉 https://sc-prisma.com/biblioteca-software/biblioteca-software.html
-        
-        ¡Que comience la aventura hacia un aprendizaje sin frustraciones!
+🌟 **¡Tu Ecosistema para {nombre_estudiante} está listo!** 🌟
+
+Hola **{nombre_adulto}**. Nos alegra acompañarte. Tu correo `{email_adulto}` ha quedado registrado con éxito.
+
+🔑 **Tu Código VIP Personal es:** `{codigo_vip}`
+⏳ **Vigencia:** 3 días (Hasta el {vencimiento.strftime('%d/%m/%Y')}).
+
+---
+
+📌 **¿Cómo ingresar al Ecosistema Digital completo?**
+1. Dirígete a la página principal de nuestros ecosistemas.
+2. Busca la sección o botón de **"Inicia sesión VIP"**.
+3. Introduce tu código `{codigo_vip}` para ingresar directamente al espacio de {nombre_estudiante}.
+
+🚀 **¿Y las Aplicaciones Educativas?**
+¡Este mismo código te sirve por 3 días para probar nuestras apps de forma gratuita! Explora y elige tus herramientas favoritas en nuestra **Biblioteca de Software**: 
+👉 [Biblioteca de Software SC-Prisma](https://sc-prisma.com/biblioteca-software/biblioteca-software.html)
+
+¡Que comience la aventura hacia un aprendizaje sin frustraciones!
         """
 
 demo = gr.Interface(
