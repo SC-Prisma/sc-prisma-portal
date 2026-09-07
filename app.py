@@ -5,6 +5,9 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Inicializar Firebase usando el secreto seguro de Render
 if not firebase_admin._apps:
@@ -14,6 +17,61 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+def enviar_correo_respaldo(destinatario, nombre_usuario, codigo, tipo_usuario, vencimiento):
+    remitente = os.getenv("MAIL_USER")
+    password = os.getenv("MAIL_PASSWORD")
+    
+    if not remitente or not password:
+        return False  # Si no están configuradas las credenciales, omite el envío para evitar errores en la app
+    
+    try:
+        asunto = "✨ Tus Accesos y Código VIP - SC-Prisma"
+        
+        cuerpo = f"""
+Hola {nombre_usuario},
+
+Nos alegra mucho acompañarte en el Ecosistema SC-Prisma. 
+
+A continuación, tienes el respaldo de tus datos de acceso para tu período de prueba de 3 días:
+
+🔑 Tu Código VIP: {codigo}
+⏳ Vigencia: Hasta el {vencimiento}
+👤 Perfil: {tipo_usuario}
+
+---
+
+📌 Enlaces de Acceso Importantes:
+• Ingresa al Ecosistema Digital con tu código en la plataforma principal.
+• Explora la Biblioteca de Software: https://sc-prisma.com/biblioteca-software/biblioteca-software.html
+• Conoce la Red Profesional: https://sc-prisma.com/solicitud-profesional.html
+
+---
+
+⚖️ TÉRMINOS Y CONDICIONES DE USO:
+Al ingresar y hacer uso de las distintas aplicaciones y herramientas del Ecosistema Digital de SC-Prisma, el usuario acepta expresamente los términos de uso, políticas de privacidad y los límites de las licencias temporales de prueba. El código es de uso personal e intransferible.
+
+¡Que comience la aventura hacia un aprendizaje sin frustraciones!
+
+Atentamente,
+El Equipo de SC-Prisma
+"""
+
+        msg = MIMEMultipart()
+        msg['From'] = remitente
+        msg['To'] = destinatario
+        msg['Subject'] = asunto
+        msg.attach(MIMEText(cuerpo, 'plain'))
+
+        servidor = smtplib.SMTP('smtp.gmail.com', 587)
+        servidor.starttls()
+        servidor.login(remitente, password)
+        servidor.sendmail(remitente, destinatario, msg.as_string())
+        servidor.quit()
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+        return False
 
 def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estudiante, edad_estudiante, motivo_apoyo, app_preferida):
     if rol == "Profesional / Educador / Terapeuta":
@@ -33,6 +91,7 @@ Para adquirir tu Oficina PRO y emitir códigos ilimitados para tus familias, sus
         
         hoy = datetime.now()
         vencimiento = hoy + timedelta(days=3)
+        fecha_venc_str = vencimiento.strftime('%d/%m/%Y')
         
         nuevo_registro_profesional = {
             'apoderado': nombre_adulto,
@@ -44,7 +103,7 @@ Para adquirir tu Oficina PRO y emitir códigos ilimitados para tus familias, sus
             'plan': 'Prueba Profesional',
             'app_contratada': app_preferida,
             'fecha_creacion': hoy.strftime("%d/%m/%Y"),
-            'fecha_vencimiento': vencimiento.strftime("%d/%m/%Y"),
+            'fecha_vencimiento': fecha_venc_str,
             'codigo_vip': codigo_vip,
             'profesionalId': 'red-profesional', 
             'estado_acceso': 'Activo'
@@ -52,13 +111,17 @@ Para adquirir tu Oficina PRO y emitir códigos ilimitados para tus familias, sus
         
         db.collection('estudiantes').add(nuevo_registro_profesional)
         
+        # Enviar correo de respaldo automático
+        enviar_correo_respaldo(email_adulto, nombre_adulto, codigo_vip, "Profesional / Terapeuta", fecha_venc_str)
+        
         return f"""
 👩‍💼 **¡Bienvenid@ a la Red Profesional SC-Prisma, {nombre_adulto}!** 👩‍💼
 
-Tu registro y tu período de prueba gratuito de **3 días** se han activado con éxito en Firebase.
+Tu registro y tu período de prueba gratuito de **3 días** se han activado con éxito. 
+Te hemos enviado un **correo de respaldo** a `{email_adulto}` con tu clave y los términos de uso.
 
 🔑 **Tu Código VIP Profesional es:** `{codigo_vip}`
-⏳ **Vigencia:** Hasta el {vencimiento.strftime('%d/%m/%Y')}.
+⏳ **Vigencia:** Hasta el {fecha_venc_str}.
 
 ---
 
@@ -67,12 +130,14 @@ Tu registro y tu período de prueba gratuito de **3 días** se han activado con 
 2. Introduce tu código `{codigo_vip}` en la opción de inicio de sesión VIP.
 
 🚀 **¿Y la Biblioteca de Aplicaciones?**
-Puedes explorar todas las herramientas interactivas y probarlas utilizando este mismo código en nuestra **Biblioteca de Software**: 
+Puedes explorar todas las herramientas interactivas utilizando este mismo código en nuestra **Biblioteca de Software**: 
 👉 [Biblioteca de Software SC-Prisma](https://sc-prisma.com/biblioteca-software/biblioteca-software.html)
 
 💼 **¿Deseas gestionar tu propia Oficina PRO?**
 Para conectar este entorno con una oficina virtual y emitir códigos personalizados a tus familias, suscríbete a un plan visitando: 
 👉 [Solicitud Profesional SC-Prisma](https://sc-prisma.com/solicitud-profesional.html)
+
+⚖️ *Al ingresar a las aplicaciones, aceptas los términos y condiciones de uso del Ecosistema.*
         """
     else:
         usuarios_previos = db.collection('estudiantes').where('email', '==', email_adulto).get()
@@ -91,6 +156,7 @@ Para continuar disfrutando de las aplicaciones y mantener el Ecosistema Digital 
         
         hoy = datetime.now()
         vencimiento = hoy + timedelta(days=3)
+        fecha_venc_str = vencimiento.strftime('%d/%m/%Y')
         
         nuevo_ecosistema_libre = {
             'apoderado': nombre_adulto,
@@ -102,7 +168,7 @@ Para continuar disfrutando de las aplicaciones y mantener el Ecosistema Digital 
             'plan': 'Prueba',
             'app_contratada': app_preferida,
             'fecha_creacion': hoy.strftime("%d/%m/%Y"),
-            'fecha_vencimiento': vencimiento.strftime("%d/%m/%Y"),
+            'fecha_vencimiento': fecha_venc_str,
             'codigo_vip': codigo_vip,
             'profesionalId': 'consultora', 
             'estado_acceso': 'Activo'
@@ -110,13 +176,17 @@ Para continuar disfrutando de las aplicaciones y mantener el Ecosistema Digital 
         
         db.collection('estudiantes').add(nuevo_ecosistema_libre)
         
+        # Enviar correo de respaldo automático
+        enviar_correo_respaldo(email_adulto, nombre_adulto, codigo_vip, f"Familiar ({nombre_estudiante})", fecha_venc_str)
+        
         return f"""
 🌟 **¡Tu Ecosistema para {nombre_estudiante} está listo!** 🌟
 
 Hola **{nombre_adulto}**. Nos alegra acompañarte. Tu correo `{email_adulto}` ha quedado registrado con éxito.
+Te hemos enviado un **correo de respaldo** con tu clave para que no la pierdas.
 
 🔑 **Tu Código VIP Personal es:** `{codigo_vip}`
-⏳ **Vigencia:** 3 días (Hasta el {vencimiento.strftime('%d/%m/%Y')}).
+⏳ **Vigencia:** 3 días (Hasta el {fecha_venc_str}).
 
 ---
 
@@ -128,6 +198,8 @@ Hola **{nombre_adulto}**. Nos alegra acompañarte. Tu correo `{email_adulto}` ha
 🚀 **¿Y las Aplicaciones Educativas?**
 ¡Este mismo código te sirve por 3 días para probar nuestras apps de forma gratuita! Explora y elige tus herramientas favoritas en nuestra **Biblioteca de Software**: 
 👉 [Biblioteca de Software SC-Prisma](https://sc-prisma.com/biblioteca-software/biblioteca-software.html)
+
+⚖️ *Al ingresar y hacer uso de las distintas aplicaciones, aceptas los términos y condiciones de uso del Ecosistema.*
 
 ¡Que comience la aventura hacia un aprendizaje sin frustraciones!
         """
