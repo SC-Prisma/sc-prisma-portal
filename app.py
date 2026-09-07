@@ -168,7 +168,10 @@ demo = gr.Interface(
     outputs=gr.Markdown(label="Respuesta y Tus Accesos SC-Prisma"),
     title="✨ Formulario para Solicitud de Prueba Gratuita | SC-Prisma",
     description="Completa los datos para activar tus 3 días de acceso al Ecosistema Digital y a las Apps Educativas.",
-    theme="soft"
+    theme="soft",
+    submit_btn="🚀 Activar Mi Prueba y Obtener Acceso"
 )
 
-demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
+# Lanzamiento para la nube en Render
+demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))  submit_btn="🚀 Activar Mi Prueba y Obtener Acceso"
+)
