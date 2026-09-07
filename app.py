@@ -17,12 +17,61 @@ db = firestore.client()
 
 def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estudiante, edad_estudiante, motivo_apoyo, app_preferida):
     if rol == "Profesional / Educador / Terapeuta":
+        usuarios_previos = db.collection('estudiantes').where('email', '==', email_adulto).get()
+        
+        if len(usuarios_previos) > 0:
+            return f"""
+⏳ **Hola nuevamente, {nombre_adulto}.**
+
+Notamos que el correo `{email_adulto}` ya disfrutó de su período de prueba gratuito profesional. 
+Para adquirir tu Oficina PRO y emitir códigos ilimitados para tus familias, suscríbete visitando nuestra página oficial:
+👉 [Solicitud Profesional SC-Prisma](https://sc-prisma.com/solicitud-profesional.html)
+            """
+        
+        prefijo = nombre_adulto.split()[0][:3].upper()
+        codigo_vip = f"PRO{prefijo}{random.randint(1000, 9999)}"
+        
+        hoy = datetime.now()
+        vencimiento = hoy + timedelta(days=3)
+        
+        nuevo_registro_profesional = {
+            'apoderado': nombre_adulto,
+            'email': email_adulto,
+            'nombre': f"Evaluación Profesional ({nombre_estudiante})",
+            'edad': f"{edad_estudiante} años",
+            'diagnostico': motivo_apoyo,
+            'grupo': 'Acceso Directo Profesional',
+            'plan': 'Prueba Profesional',
+            'app_contratada': app_preferida,
+            'fecha_creacion': hoy.strftime("%d/%m/%Y"),
+            'fecha_vencimiento': vencimiento.strftime("%d/%m/%Y"),
+            'codigo_vip': codigo_vip,
+            'profesionalId': 'red-profesional', 
+            'estado_acceso': 'Activo'
+        }
+        
+        db.collection('estudiantes').add(nuevo_registro_profesional)
+        
         return f"""
-👩‍💼 **Bienvenid@ a la Red Profesional SC-Prisma**
+👩‍💼 **¡Bienvenid@ a la Red Profesional SC-Prisma, {nombre_adulto}!** 👩‍💼
 
-Hola **{nombre_adulto}**, recuerda que como profesional gestionas tu Oficina PRO y emites códigos para las familias.
+Tu registro y tu período de prueba gratuito de **3 días** se han activado con éxito en Firebase.
 
-Tienes acceso al **Ecosistema del Estudiante** para evaluar las herramientas. Para conocer el entorno que conecta este ecosistema con una **Oficina Virtual**, suscríbete a un plan visitando nuestra página oficial: 
+🔑 **Tu Código VIP Profesional es:** `{codigo_vip}`
+⏳ **Vigencia:** Hasta el {vencimiento.strftime('%d/%m/%Y')}.
+
+---
+
+📌 **¿Cómo evaluar el Ecosistema del Estudiante?**
+1. Dirígete a la página principal de nuestros ecosistemas.
+2. Introduce tu código `{codigo_vip}` en la opción de inicio de sesión VIP.
+
+🚀 **¿Y la Biblioteca de Aplicaciones?**
+Puedes explorar todas las herramientas interactivas y probarlas utilizando este mismo código en nuestra **Biblioteca de Software**: 
+👉 [Biblioteca de Software SC-Prisma](https://sc-prisma.com/biblioteca-software/biblioteca-software.html)
+
+💼 **¿Deseas gestionar tu propia Oficina PRO?**
+Para conectar este entorno con una oficina virtual y emitir códigos personalizados a tus familias, suscríbete a un plan visitando: 
 👉 [Solicitud Profesional SC-Prisma](https://sc-prisma.com/solicitud-profesional.html)
         """
     else:
