@@ -65,7 +65,6 @@ def portal_sc_prisma_con_marketing(rol, nombre_adulto, email_adulto, nombre_estu
     usuarios_previos = db.collection('estudiantes').where('email', '==', email_adulto).get()
     
     if len(usuarios_previos) > 0:
-        # Si ya existe, recuperamos su información de Firebase para mostrarla en pantalla y que no se queden sin clave
         doc = usuarios_previos[0].to_dict()
         codigo_existente = doc.get('codigo_vip', 'N/A')
         vencimiento_existente = doc.get('fecha_vencimiento', 'N/A')
@@ -87,7 +86,6 @@ Para que no te quedes sin acceso, aquí tienes nuevamente tus datos activos:
 ⚖️ *Al ingresar a las aplicaciones, aceptas los términos y condiciones de uso del Ecosistema.*
         """
     
-    # Si es nuevo registro
     if rol == "Profesional / Educador / Terapeuta":
         prefijo = nombre_adulto.split()[0][:3].upper()
         codigo_vip = f"PRO{prefijo}{random.randint(1000, 9999)}"
@@ -119,7 +117,6 @@ Para que no te quedes sin acceso, aquí tienes nuevamente tus datos activos:
     
     db.collection('estudiantes').add(nuevo_registro)
     
-    # Intentar enviar correo y obtener estado
     estado_correo = enviar_correo_respaldo(email_adulto, nombre_adulto, codigo_vip, tipo_str, fecha_venc_str)
     
     return f"""
@@ -174,27 +171,4 @@ demo = gr.Interface(
     theme="soft"
 )
 
-demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
-
-
-
-
-       
-        
-       
-
-
-   
-        
-      
-            
-
-
-
-
-               
-    theme="soft"
-)
-
-# Lanzamiento para la nube en Render
 demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
