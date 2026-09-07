@@ -1,4 +1,3 @@
-
 import gradio as gr
 from datetime import datetime, timedelta
 import random
