@@ -173,5 +173,4 @@ demo = gr.Interface(
 )
 
 # Lanzamiento para la nube en Render
-demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))  submit_btn="🚀 Activar Mi Prueba y Obtener Acceso"
-)
+demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
